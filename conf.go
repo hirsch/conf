@@ -40,6 +40,16 @@ type lexer struct {
 	data map[string]map[string]string
 }
 
+// Read returns the value to a given section and key.
+// An error will be returned if a key or section does not exist.
+func (conf *Conf) Read(section, key string) (string, error) {
+	value, exists := conf.data[section][key]
+	if !exists {
+		return "", errors.New("key or section does not exist")
+	}
+	return value, nil
+}
+
 // Open opens and parses a conf file.
 func Open(filename string) (*Conf, error) {
 	conf := &Conf{filename: filename}
@@ -211,14 +221,3 @@ func (lex *lexer) flush() string {
 	lex.buffer = ""
 	return save
 }
-
-// Read returns the value to a given section and key.
-// An error will be returned if a key or section does not exist.
-func (conf *Conf) Read(section, key string) (string, error) {
-	value, exists := conf.data[section][key]
-	if !exists {
-		return "", errors.New("key or section does not exist")
-	}
-	return value, nil
-}
-
