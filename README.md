@@ -1,7 +1,7 @@
 conf
 ====
 
-Package conf offers read access to conf files.
+Package conf parses conf files and offers functions for reading.
 ###Examples
 ####Configuration file format:
 ```
