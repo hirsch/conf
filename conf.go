@@ -1,4 +1,4 @@
-// Package conf offers read access to conf files.
+// Package conf parses conf files and offers functions for reading.
 // Configuration file format:
 // 	#comment
 // 	;comment
@@ -85,21 +85,17 @@ func Open(filename string) (*Conf, error) {
 }
 
 func (lex *lexer) doStart() int {
-	switch lex.look() {
+	switch lex.add() {
 	case "":
 		return stateEOF
 	case " ", "	", "\n":
-		lex.add()
 		return stateStart
 	case "[":
-		lex.add()
 		lex.flush()
 		return stateSection
 	case "#", ";":
-		lex.add()
 		return stateComment
 	}
-	lex.add()
 	lex.bufferError = "key not in section: " + lex.buffer
 	return stateError
 }
@@ -124,18 +120,15 @@ func (lex *lexer) doMid() int {
 }
 
 func (lex *lexer) doComment() int {
-	switch lex.look() {
+	switch lex.add() {
 	case "":
 		return stateEOF
 	case "\n":
-		lex.add()
 		if lex.bufferSection == "" {
 			return stateStart
 		}
 		return stateMid
 	}
-
-	lex.add()
 	return stateComment
 }
 
@@ -147,6 +140,11 @@ func (lex *lexer) doSection() int {
 		return stateError
 	case "]":
 		lex.bufferSection = lex.flush()
+		
+		if _, ok := lex.data[lex.bufferSection]; ok {
+			lex.bufferError = "duplicate section: " + lex.bufferSection
+			return stateError
+		}
 		lex.data[lex.bufferSection] = make(map[string]string)
 		lex.add()
 		return stateMid
@@ -163,6 +161,10 @@ func (lex *lexer) doKey() int {
 		return stateError
 	case "=":
 		lex.bufferKey = lex.flush()
+		if _, ok := lex.data[lex.bufferSection][lex.bufferKey]; ok {
+			lex.bufferError = "duplicate key in section: " + lex.bufferKey
+			return stateError
+		}
 		lex.add()
 		lex.flush()
 		return stateValue
@@ -173,16 +175,11 @@ func (lex *lexer) doKey() int {
 
 func (lex *lexer) doValue() int {
 	switch lex.look() {
-	case "\n":
+	case "\n", "":
 		lex.bufferValue = lex.flush()
 		lex.add()
 		lex.data[lex.bufferSection][lex.bufferKey] = lex.bufferValue
 		return stateMid
-	case "":
-		lex.bufferValue = lex.flush()
-		lex.add()
-		lex.data[lex.bufferSection][lex.bufferKey] = lex.bufferValue
-		return stateEOF
 	}
 	lex.add()
 	return stateValue
@@ -198,7 +195,7 @@ func (lex *lexer) get() string {
 	if err != nil {
 		return ""
 	}
-	if string(chr[0]) == "\r" {
+	if string(chr[0]) == "\r" && lex.look() == "\n"  {	//\r\n to \n for easier parsing
 		return lex.get()
 	}
 	return string(chr[0])
