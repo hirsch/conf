@@ -2,8 +2,8 @@ conf
 ====
 
 Package conf offers read access to conf files.
-##Examples
-###Configuration file format:
+###Examples
+####Configuration file format:
 ```
 #comment
 ;comment
@@ -12,7 +12,7 @@ Package conf offers read access to conf files.
 value=key
 ```
 
-###Loading conf file
+####Loading conf file
 ```go
 data, err := conf.Open("filename.conf")
 if err != nil {
@@ -20,7 +20,7 @@ if err != nil {
 }
 ```
 
-###Reading data
+####Reading data
 ```go
 value, err := data.Read("section", "key")
 if err != nil {
