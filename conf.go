@@ -45,7 +45,7 @@ type lexer struct {
 func (conf *Conf) Read(section, key string) (string, error) {
 	value, exists := conf.data[section][key]
 	if !exists {
-		return "", errors.New("key or section does not exist")
+		return "", errors.New("read: " + conf.filename + " key \"" + key + "\" does not exist in section \"" + section + "\"")
 	}
 	return value, nil
 }
