@@ -57,6 +57,7 @@ func Open(filename string) (*Conf, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	state := stateStart
 	lex := &lexer{file, "", "", "", "", "", make(map[string]map[string]string)}
